@@ -15,28 +15,19 @@
  */
 package com.google.firebase.example.fireeats.adapter
 
-import com.google.firebase.example.fireeats.Filters.Companion.default
-import com.google.firebase.example.fireeats.adapter.FirestoreAdapter
-import android.view.ViewGroup
 import android.view.LayoutInflater
-import com.google.firebase.example.fireeats.R
-import androidx.recyclerview.widget.RecyclerView
-import android.widget.TextView
-import me.zhanghai.android.materialratingbar.MaterialRatingBar
-import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
-import com.google.firebase.example.fireeats.model.Restaurant
-import com.bumptech.glide.Glide
-import com.google.firebase.example.fireeats.util.RestaurantUtil
-import com.google.firebase.auth.FirebaseUser
-import android.text.TextUtils
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
-import com.google.firebase.auth.FirebaseAuth
-import com.firebase.ui.auth.AuthUI
-import com.google.firebase.example.fireeats.util.FirebaseUtil
-import androidx.lifecycle.ViewModel
-import com.google.firebase.example.fireeats.Filters
-import com.google.firebase.firestore.*
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.google.firebase.example.fireeats.R
+import com.google.firebase.example.fireeats.model.Restaurant
+import com.google.firebase.example.fireeats.util.RestaurantUtil
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.Query
+import me.zhanghai.android.materialratingbar.MaterialRatingBar
 
 /**
  * RecyclerView adapter for a list of Restaurants.
@@ -57,13 +48,13 @@ open class RestaurantAdapter(query: Query?, private val mListener: OnRestaurantS
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var imageView: ImageView
-        var nameView: TextView
-        var ratingBar: MaterialRatingBar
-        var numRatingsView: TextView
-        var priceView: TextView
-        var categoryView: TextView
-        var cityView: TextView
+        private var imageView: ImageView = itemView.findViewById(R.id.restaurant_item_image)
+        private var nameView: TextView = itemView.findViewById(R.id.restaurant_item_name)
+        private var ratingBar: MaterialRatingBar = itemView.findViewById(R.id.restaurant_item_rating)
+        private var numRatingsView: TextView = itemView.findViewById(R.id.restaurant_item_num_ratings)
+        private var priceView: TextView = itemView.findViewById(R.id.restaurant_item_price)
+        private var categoryView: TextView = itemView.findViewById(R.id.restaurant_item_category)
+        var cityView: TextView = itemView.findViewById(R.id.restaurant_item_city)
         fun bind(
             snapshot: DocumentSnapshot?,
             listener: OnRestaurantSelectedListener?
@@ -89,14 +80,5 @@ open class RestaurantAdapter(query: Query?, private val mListener: OnRestaurantS
             itemView.setOnClickListener { listener?.onRestaurantSelected(snapshot) }
         }
 
-        init {
-            imageView = itemView.findViewById(R.id.restaurant_item_image)
-            nameView = itemView.findViewById(R.id.restaurant_item_name)
-            ratingBar = itemView.findViewById(R.id.restaurant_item_rating)
-            numRatingsView = itemView.findViewById(R.id.restaurant_item_num_ratings)
-            priceView = itemView.findViewById(R.id.restaurant_item_price)
-            categoryView = itemView.findViewById(R.id.restaurant_item_category)
-            cityView = itemView.findViewById(R.id.restaurant_item_city)
-        }
     }
 }

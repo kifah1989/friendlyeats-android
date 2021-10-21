@@ -15,59 +15,48 @@
  */
 package com.google.firebase.example.fireeats
 
-import me.zhanghai.android.materialratingbar.MaterialRatingBar
-import android.widget.EditText
-import com.google.firebase.example.fireeats.RatingDialogFragment.RatingListener
 import android.os.Bundle
-import com.google.firebase.example.fireeats.R
 import com.google.firebase.example.fireeats.util.FirebaseUtil
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.example.fireeats.FilterDialogFragment
 import com.google.firebase.example.fireeats.adapter.RestaurantAdapter
 import com.google.firebase.example.fireeats.viewmodel.MainActivityViewModel
-import com.google.firebase.example.fireeats.MainActivity
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.firebase.example.fireeats.model.Restaurant
 import com.google.firebase.example.fireeats.util.RestaurantUtil
-import com.google.firebase.example.fireeats.Filters
 import android.text.Html
 import android.content.Intent
-import android.app.Activity
-import com.google.firebase.example.fireeats.RestaurantDetailActivity
 import com.firebase.ui.auth.AuthUI.IdpConfig.EmailBuilder
 import android.widget.Toast
-import android.text.TextUtils
 import android.util.Log
 import android.view.*
-import android.widget.Spinner
 import androidx.appcompat.widget.Toolbar
+import androidx.core.text.HtmlCompat.fromHtml
 import com.google.firebase.firestore.*
 
 class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragment.FilterListener,
     RestaurantAdapter.OnRestaurantSelectedListener {
-    private var mToolbar: Toolbar? = null
-    private var mCurrentSearchView: TextView? = null
-    private var mCurrentSortByView: TextView? = null
-    private var mRestaurantsRecycler: RecyclerView? = null
-    private var mEmptyView: ViewGroup? = null
-    private var mFirestore: FirebaseFirestore? = null
-    private var mQuery: Query? = null
-    private var mFilterDialog: FilterDialogFragment? = null
-    private var mAdapter: RestaurantAdapter? = null
-    private var mViewModel: MainActivityViewModel? = null
+    private lateinit var mToolbar: Toolbar
+    private lateinit var mCurrentSearchView: TextView
+    private lateinit var mCurrentSortByView: TextView
+    private lateinit var mRestaurantsRecycler: RecyclerView
+    private lateinit var mEmptyView: ViewGroup
+    private lateinit var mFirestore: FirebaseFirestore
+    private lateinit var mQuery: Query
+    private lateinit var mFilterDialog: FilterDialogFragment
+    private lateinit var mAdapter: RestaurantAdapter
+    private lateinit var mViewModel: MainActivityViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        mFirestore = FirebaseUtil.firestore
+        mFirestore = FirebaseUtil.firestore!!
 
         // Get the 50 highest rated restaurants
-        mQuery = mFirestore?.collection("restaurants")
-            ?.orderBy("avgRating", Query.Direction.DESCENDING)
-            ?.limit(LIMIT.toLong())
+        mQuery = mFirestore.collection("restaurants")
+            .orderBy("avgRating", Query.Direction.DESCENDING)
+            .limit(LIMIT.toLong())
         mToolbar = findViewById(R.id.toolbar)
         setSupportActionBar(mToolbar)
         mCurrentSearchView = findViewById(R.id.text_current_search)
@@ -84,7 +73,7 @@ class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragm
         FirebaseFirestore.setLoggingEnabled(true)
 
         // Initialize Firestore and the main RecyclerView
-        mFirestore = FirebaseUtil.firestore
+        mFirestore = FirebaseUtil.firestore!!
         initRecyclerView()
 
         // Filter Dialog
@@ -92,18 +81,15 @@ class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragm
     }
 
     private fun initRecyclerView() {
-        if (mQuery == null) {
-            Log.w(TAG, "No query, not initializing RecyclerView")
-        }
         mAdapter = object : RestaurantAdapter(mQuery, this@MainActivity) {
             override fun onDataChanged() {
                 // Show/hide content if the query returns empty.
                 if (itemCount == 0) {
-                    mRestaurantsRecycler!!.visibility = View.GONE
-                    mEmptyView!!.visibility = View.VISIBLE
+                    mRestaurantsRecycler.visibility = View.GONE
+                    mEmptyView.visibility = View.VISIBLE
                 } else {
-                    mRestaurantsRecycler!!.visibility = View.VISIBLE
-                    mEmptyView!!.visibility = View.GONE
+                    mRestaurantsRecycler.visibility = View.VISIBLE
+                    mEmptyView.visibility = View.GONE
                 }
             }
 
@@ -115,8 +101,8 @@ class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragm
                 ).show()
             }
         }
-        mRestaurantsRecycler!!.layoutManager = LinearLayoutManager(this)
-        mRestaurantsRecycler!!.adapter = mAdapter
+        mRestaurantsRecycler.layoutManager = LinearLayoutManager(this)
+        mRestaurantsRecycler.adapter = mAdapter
     }
 
     public override fun onStart() {
@@ -129,24 +115,20 @@ class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragm
         }
 
         // Apply filters
-        onFilter(mViewModel!!.filters)
+        onFilter(mViewModel.filters)
 
         // Start listening for Firestore updates
-        if (mAdapter != null) {
-            mAdapter!!.startListening()
-        }
+        mAdapter.startListening()
     }
 
     public override fun onStop() {
         super.onStop()
-        if (mAdapter != null) {
-            mAdapter!!.stopListening()
-        }
+        mAdapter.stopListening()
     }
 
     private fun onAddItemsClicked() {
         // Get a reference to the restaurants collection
-        val restaurants = mFirestore!!.collection("restaurants")
+        val restaurants = mFirestore.collection("restaurants")
         for (i in 0..9) {
             // Get a random Restaurant POJO
             val restaurant = RestaurantUtil.getRandom(this)
@@ -159,7 +141,7 @@ class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragm
 
     override fun onFilter(filters: Filters) {
         // Construct query basic query
-        var query: Query = mFirestore!!.collection("restaurants")
+        var query: Query = mFirestore.collection("restaurants")
 
         // Category (equality filter)
         if (filters.hasCategory()) {
@@ -186,14 +168,14 @@ class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragm
 
         // Update the query
         mQuery = query
-        mAdapter!!.setQuery(query)
+        mAdapter.setQuery(query)
 
         // Set header
-        mCurrentSearchView!!.text = Html.fromHtml(filters.getSearchDescription(this))
-        mCurrentSortByView!!.text = filters.getOrderDescription(this)
+        mCurrentSearchView.text = fromHtml(filters.getSearchDescription(),0)
+        mCurrentSortByView.text = filters.getOrderDescription(this)
 
         // Save filters
-        mViewModel!!.filters = filters
+        mViewModel.filters = filters
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -215,7 +197,7 @@ class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragm
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_SIGN_IN) {
-            mViewModel!!.isSigningIn = false
+            mViewModel.isSigningIn = false
             if (resultCode != RESULT_OK && shouldStartSignIn()) {
                 startSignIn()
             }
@@ -229,13 +211,13 @@ class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragm
         }
     }
 
-    fun onFilterClicked() {
+    private fun onFilterClicked() {
         // Show the dialog containing filter options
-        mFilterDialog!!.show(supportFragmentManager, FilterDialogFragment.Companion.TAG)
+        mFilterDialog.show(supportFragmentManager, FilterDialogFragment.TAG)
     }
 
-    fun onClearFilterClicked() {
-        mFilterDialog!!.resetFilters()
+    private fun onClearFilterClicked() {
+        mFilterDialog.resetFilters()
         onFilter(Filters.default)
     }
 
@@ -247,7 +229,7 @@ class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragm
     }
 
     private fun shouldStartSignIn(): Boolean {
-        return !mViewModel!!.isSigningIn && FirebaseUtil.auth?.currentUser == null
+        return !mViewModel.isSigningIn && FirebaseUtil.auth?.currentUser == null
     }
 
     private fun startSignIn() {
@@ -262,7 +244,7 @@ class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragm
             ?.setIsSmartLockEnabled(false)
             ?.build()
         startActivityForResult(intent, RC_SIGN_IN)
-        mViewModel!!.isSigningIn = true
+        mViewModel.isSigningIn = true
     }
 
     private fun showTodoToast() {
@@ -270,7 +252,6 @@ class MainActivity: AppCompatActivity(), View.OnClickListener, FilterDialogFragm
     }
 
     companion object {
-        private const val TAG = "MainActivity"
         private const val RC_SIGN_IN = 9001
         private const val LIMIT = 50
     }

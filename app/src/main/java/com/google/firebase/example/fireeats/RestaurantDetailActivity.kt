@@ -15,33 +15,27 @@
  */
 package com.google.firebase.example.fireeats
 
-import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.example.fireeats.RatingDialogFragment.RatingListener
-import android.widget.TextView
-import me.zhanghai.android.materialratingbar.MaterialRatingBar
-import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.example.fireeats.RatingDialogFragment
-import com.google.firebase.example.fireeats.adapter.RatingAdapter
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
-import com.google.firebase.example.fireeats.R
-import com.google.firebase.example.fireeats.RestaurantDetailActivity
-import com.google.firebase.example.fireeats.util.FirebaseUtil
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.firebase.example.fireeats.model.Restaurant
-import com.google.firebase.example.fireeats.util.RestaurantUtil
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.android.gms.tasks.OnSuccessListener
-import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.Task
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.example.fireeats.RatingDialogFragment.RatingListener
+import com.google.firebase.example.fireeats.adapter.RatingAdapter
 import com.google.firebase.example.fireeats.model.Rating
+import com.google.firebase.example.fireeats.model.Restaurant
+import com.google.firebase.example.fireeats.util.FirebaseUtil
+import com.google.firebase.example.fireeats.util.RestaurantUtil
 import com.google.firebase.firestore.*
-import java.lang.IllegalArgumentException
+import me.zhanghai.android.materialratingbar.MaterialRatingBar
 
 class RestaurantDetailActivity : AppCompatActivity(), View.OnClickListener,
     EventListener<DocumentSnapshot>, RatingListener {
@@ -76,7 +70,7 @@ class RestaurantDetailActivity : AppCompatActivity(), View.OnClickListener,
 
         // Get restaurant ID from extras
         val restaurantId = intent.extras!!.getString(KEY_RESTAURANT_ID)
-            ?: throw IllegalArgumentException("Must pass extra " + KEY_RESTAURANT_ID)
+            ?: throw IllegalArgumentException("Must pass extra $KEY_RESTAURANT_ID")
 
         // Initialize Firestore
         mFirestore = FirebaseUtil.firestore!!
@@ -85,7 +79,7 @@ class RestaurantDetailActivity : AppCompatActivity(), View.OnClickListener,
         mRestaurantRef = mFirestore.collection("restaurants").document(restaurantId)
 
         // Get ratings
-        val ratingsQuery = mRestaurantRef!!
+        val ratingsQuery = mRestaurantRef
             .collection("ratings")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .limit(50)
@@ -94,16 +88,16 @@ class RestaurantDetailActivity : AppCompatActivity(), View.OnClickListener,
         mRatingAdapter = object : RatingAdapter(ratingsQuery) {
             override fun onDataChanged() {
                 if (itemCount == 0) {
-                    mRatingsRecycler.setVisibility(View.GONE)
-                    mEmptyView.setVisibility(View.VISIBLE)
+                    mRatingsRecycler.visibility = View.GONE
+                    mEmptyView.visibility = View.VISIBLE
                 } else {
-                    mRatingsRecycler.setVisibility(View.VISIBLE)
-                    mEmptyView.setVisibility(View.GONE)
+                    mRatingsRecycler.visibility = View.VISIBLE
+                    mEmptyView.visibility = View.GONE
                 }
             }
         }
-        mRatingsRecycler.setLayoutManager(LinearLayoutManager(this))
-        mRatingsRecycler.setAdapter(mRatingAdapter)
+        mRatingsRecycler.layoutManager = LinearLayoutManager(this)
+        mRatingsRecycler.adapter = mRatingAdapter
         mRatingDialog = RatingDialogFragment()
     }
 
@@ -122,8 +116,8 @@ class RestaurantDetailActivity : AppCompatActivity(), View.OnClickListener,
 
     override fun onClick(v: View) {
         when (v.id) {
-            R.id.restaurant_button_back -> onBackArrowClicked(v)
-            R.id.fab_show_rating_dialog -> onAddRatingClicked(v)
+            R.id.restaurant_button_back -> onBackArrowClicked()
+            R.id.fab_show_rating_dialog -> onAddRatingClicked()
         }
     }
 
@@ -136,7 +130,7 @@ class RestaurantDetailActivity : AppCompatActivity(), View.OnClickListener,
             .document()
 
         // In a transaction, add the new rating and update the aggregate totals
-        return mFirestore!!.runTransaction { transaction: Transaction ->
+        return mFirestore.runTransaction { transaction: Transaction ->
             val restaurant = transaction[restaurantRef]
                 .toObject(Restaurant::class.java)
 
@@ -174,25 +168,25 @@ class RestaurantDetailActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     private fun onRestaurantLoaded(restaurant: Restaurant?) {
-        mNameView!!.text = restaurant!!.name
-        mRatingIndicator!!.rating = restaurant.avgRating.toFloat()
-        mNumRatingsView!!.text = getString(R.string.fmt_num_ratings, restaurant.numRatings)
-        mCityView!!.text = restaurant.city
-        mCategoryView!!.text = restaurant.category
-        mPriceView!!.text = RestaurantUtil.getPriceString(restaurant)
+        mNameView.text = restaurant!!.name
+        mRatingIndicator.rating = restaurant.avgRating.toFloat()
+        mNumRatingsView.text = getString(R.string.fmt_num_ratings, restaurant.numRatings)
+        mCityView.text = restaurant.city
+        mCategoryView.text = restaurant.category
+        mPriceView.text = RestaurantUtil.getPriceString(restaurant)
 
         // Background image
-        Glide.with(mImageView!!.context)
+        Glide.with(mImageView.context)
             .load(restaurant.photo)
-            .into(mImageView!!)
+            .into(mImageView)
     }
 
-    private fun onBackArrowClicked(view: View?) {
+    private fun onBackArrowClicked() {
         onBackPressed()
     }
 
-    private fun onAddRatingClicked(view: View?) {
-        mRatingDialog!!.show(supportFragmentManager, RatingDialogFragment.TAG)
+    private fun onAddRatingClicked() {
+        mRatingDialog.show(supportFragmentManager, RatingDialogFragment.TAG)
     }
 
     override fun onRating(rating: Rating?) {
@@ -204,7 +198,7 @@ class RestaurantDetailActivity : AppCompatActivity(), View.OnClickListener,
 
                     // Hide keyboard and scroll to top
                     hideKeyboard()
-                    mRatingsRecycler!!.smoothScrollToPosition(0)
+                    mRatingsRecycler.smoothScrollToPosition(0)
                 }
                 .addOnFailureListener(this) { e ->
                     Log.w(TAG, "Add rating failed", e)

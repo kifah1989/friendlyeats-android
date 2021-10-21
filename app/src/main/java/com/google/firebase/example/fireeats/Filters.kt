@@ -15,46 +15,18 @@
  */
 package com.google.firebase.example.fireeats
 
-import me.zhanghai.android.materialratingbar.MaterialRatingBar
-import android.widget.EditText
-import com.google.firebase.example.fireeats.RatingDialogFragment.RatingListener
-import android.view.LayoutInflater
-import android.view.ViewGroup
-import android.os.Bundle
-import com.google.firebase.example.fireeats.R
-import com.google.firebase.example.fireeats.util.FirebaseUtil
-import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
-import android.widget.TextView
-import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.example.fireeats.FilterDialogFragment
-import com.google.firebase.example.fireeats.adapter.RestaurantAdapter
-import com.google.firebase.example.fireeats.viewmodel.MainActivityViewModel
-import com.google.firebase.example.fireeats.MainActivity
-import androidx.lifecycle.ViewModelProvider
-import com.google.android.material.snackbar.Snackbar
-import androidx.recyclerview.widget.LinearLayoutManager
+import android.content.Context
+import android.text.TextUtils
 import com.google.firebase.example.fireeats.model.Restaurant
 import com.google.firebase.example.fireeats.util.RestaurantUtil
-import com.google.firebase.example.fireeats.Filters
-import android.text.Html
-import android.content.Intent
-import android.app.Activity
-import android.content.Context
-import com.google.firebase.example.fireeats.RestaurantDetailActivity
-import com.firebase.ui.auth.AuthUI.IdpConfig.EmailBuilder
-import android.widget.Toast
-import android.text.TextUtils
-import android.widget.Spinner
-import com.google.firebase.firestore.*
-import java.lang.StringBuilder
+import com.google.firebase.firestore.Query
 
 /**
  * Object for passing filters around.
  */
 class Filters {
-    var category: String? = null
-    var city: String? = null
+    var category: String = ""
+    var city: String = ""
     var price = -1
     var sortBy: String = ""
     lateinit var sortDirection: Query.Direction
@@ -74,26 +46,15 @@ class Filters {
         return !TextUtils.isEmpty(sortBy)
     }
 
-    fun getSearchDescription(context: Context): String {
+    fun getSearchDescription(): String {
         val desc = StringBuilder()
-        if (category == null && city == null) {
-            desc.append("<b>")
-            desc.append(context.getString(R.string.all_restaurants))
-            desc.append("</b>")
-        }
-        if (category != null) {
-            desc.append("<b>")
-            desc.append(category)
-            desc.append("</b>")
-        }
-        if (category != null && city != null) {
-            desc.append(" in ")
-        }
-        if (city != null) {
-            desc.append("<b>")
-            desc.append(city)
-            desc.append("</b>")
-        }
+        desc.append("<b>")
+        desc.append(category)
+        desc.append("</b>")
+        desc.append(" in ")
+        desc.append("<b>")
+        desc.append(city)
+        desc.append("</b>")
         if (price > 0) {
             desc.append(" for ")
             desc.append("<b>")
@@ -104,12 +65,16 @@ class Filters {
     }
 
     fun getOrderDescription(context: Context): String {
-        return if (Restaurant.FIELD_PRICE == sortBy) {
-            context.getString(R.string.sorted_by_price)
-        } else if (Restaurant.FIELD_POPULARITY == sortBy) {
-            context.getString(R.string.sorted_by_popularity)
-        } else {
-            context.getString(R.string.sorted_by_rating)
+        return when (sortBy) {
+            Restaurant.FIELD_PRICE -> {
+                context.getString(R.string.sorted_by_price)
+            }
+            Restaurant.FIELD_POPULARITY -> {
+                context.getString(R.string.sorted_by_popularity)
+            }
+            else -> {
+                context.getString(R.string.sorted_by_rating)
+            }
         }
     }
 

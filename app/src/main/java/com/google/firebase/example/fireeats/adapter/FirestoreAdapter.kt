@@ -15,28 +15,11 @@
  */
 package com.google.firebase.example.fireeats.adapter
 
-import com.google.firebase.example.fireeats.Filters.Companion.default
-import com.google.firebase.example.fireeats.adapter.FirestoreAdapter
-import android.view.ViewGroup
-import android.view.LayoutInflater
-import com.google.firebase.example.fireeats.R
-import androidx.recyclerview.widget.RecyclerView
-import android.widget.TextView
-import me.zhanghai.android.materialratingbar.MaterialRatingBar
-import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
-import com.google.firebase.example.fireeats.model.Restaurant
-import com.bumptech.glide.Glide
-import com.google.firebase.example.fireeats.util.RestaurantUtil
-import com.google.firebase.auth.FirebaseUser
-import android.text.TextUtils
 import android.util.Log
-import com.google.firebase.auth.FirebaseAuth
-import com.firebase.ui.auth.AuthUI
-import com.google.firebase.example.fireeats.util.FirebaseUtil
-import androidx.lifecycle.ViewModel
-import com.google.firebase.example.fireeats.Filters
+import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.*
-import java.util.ArrayList
+import com.google.firebase.firestore.EventListener
+import java.util.*
 
 /**
  * RecyclerView adapter for displaying the results of a Firestore [Query].
@@ -65,7 +48,7 @@ abstract class FirestoreAdapter<VH : RecyclerView.ViewHolder?>(private var mQuer
         if (documentSnapshots != null) {
             for (change in documentSnapshots.documentChanges) {
                 // Snapshot of the changed document
-                val snapshot: DocumentSnapshot = change.document
+                change.document
                 when (change.type) {
                     DocumentChange.Type.ADDED -> onDocumentAdded(change)
                     DocumentChange.Type.MODIFIED -> onDocumentModified(change)
@@ -76,21 +59,14 @@ abstract class FirestoreAdapter<VH : RecyclerView.ViewHolder?>(private var mQuer
         onDataChanged()
     }
 
-    private var mRegistration: ListenerRegistration? = null
+    private lateinit var mRegistration: ListenerRegistration
     private val mSnapshots = ArrayList<DocumentSnapshot>()
     fun startListening() {
-        if (mQuery != null && mRegistration == null) {
-            mRegistration = mQuery!!.addSnapshotListener(this)
-        }
     }
 
     fun stopListening() {
-        if (mRegistration != null) {
-            mRegistration!!.remove()
-            mRegistration = null
-        }
+        mRegistration.remove()
         mSnapshots.clear()
-        notifyDataSetChanged()
     }
 
     fun setQuery(query: Query?) {
@@ -99,7 +75,6 @@ abstract class FirestoreAdapter<VH : RecyclerView.ViewHolder?>(private var mQuer
 
         // Clear existing data
         mSnapshots.clear()
-        notifyDataSetChanged()
 
         // Listen to new query
         mQuery = query
@@ -116,12 +91,12 @@ abstract class FirestoreAdapter<VH : RecyclerView.ViewHolder?>(private var mQuer
 
     protected open fun onError(e: FirebaseFirestoreException?) {}
     protected open fun onDataChanged() {}
-    protected fun onDocumentAdded(change: DocumentChange) {
+    private fun onDocumentAdded(change: DocumentChange) {
         mSnapshots.add(change.newIndex, change.document)
         notifyItemInserted(change.newIndex)
     }
 
-    protected fun onDocumentModified(change: DocumentChange) {
+    private fun onDocumentModified(change: DocumentChange) {
         if (change.oldIndex == change.newIndex) {
             // Item changed but remained in same position
             mSnapshots[change.oldIndex] = change.document
@@ -134,7 +109,7 @@ abstract class FirestoreAdapter<VH : RecyclerView.ViewHolder?>(private var mQuer
         }
     }
 
-    protected fun onDocumentRemoved(change: DocumentChange) {
+    private fun onDocumentRemoved(change: DocumentChange) {
         mSnapshots.removeAt(change.oldIndex)
         notifyItemRemoved(change.oldIndex)
     }

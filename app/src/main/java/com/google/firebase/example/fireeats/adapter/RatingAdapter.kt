@@ -15,28 +15,15 @@
  */
 package com.google.firebase.example.fireeats.adapter
 
-import com.google.firebase.example.fireeats.Filters.Companion.default
-import com.google.firebase.example.fireeats.adapter.FirestoreAdapter
-import android.view.ViewGroup
 import android.view.LayoutInflater
-import com.google.firebase.example.fireeats.R
-import androidx.recyclerview.widget.RecyclerView
-import android.widget.TextView
-import me.zhanghai.android.materialratingbar.MaterialRatingBar
-import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
-import com.google.firebase.example.fireeats.model.Restaurant
-import com.bumptech.glide.Glide
-import com.google.firebase.example.fireeats.util.RestaurantUtil
-import com.google.firebase.auth.FirebaseUser
-import android.text.TextUtils
 import android.view.View
-import com.google.firebase.auth.FirebaseAuth
-import com.firebase.ui.auth.AuthUI
-import com.google.firebase.example.fireeats.util.FirebaseUtil
-import androidx.lifecycle.ViewModel
-import com.google.firebase.example.fireeats.Filters
+import android.view.ViewGroup
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.example.fireeats.R
 import com.google.firebase.example.fireeats.model.Rating
-import com.google.firebase.firestore.*
+import com.google.firebase.firestore.Query
+import me.zhanghai.android.materialratingbar.MaterialRatingBar
 
 /**
  * RecyclerView adapter for a bunch of Ratings.
@@ -58,19 +45,14 @@ open class RatingAdapter(query: Query?) : FirestoreAdapter<RatingAdapter.ViewHol
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var nameView: TextView
-        var ratingBar: MaterialRatingBar
-        var textView: TextView
+        private var nameView: TextView = itemView.findViewById(R.id.rating_item_name)
+        private var ratingBar: MaterialRatingBar = itemView.findViewById(R.id.rating_item_rating)
+        var textView: TextView = itemView.findViewById(R.id.rating_item_text)
         fun bind(rating: Rating?) {
             nameView.text = rating!!.userName
             ratingBar.rating = rating.rating.toFloat()
             textView.text = rating.text
         }
 
-        init {
-            nameView = itemView.findViewById(R.id.rating_item_name)
-            ratingBar = itemView.findViewById(R.id.rating_item_rating)
-            textView = itemView.findViewById(R.id.rating_item_text)
-        }
     }
 }

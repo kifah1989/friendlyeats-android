@@ -15,44 +15,16 @@
  */
 package com.google.firebase.example.fireeats
 
-import me.zhanghai.android.materialratingbar.MaterialRatingBar
-import android.widget.EditText
-import com.google.firebase.example.fireeats.RatingDialogFragment.RatingListener
-import android.view.LayoutInflater
-import android.view.ViewGroup
-import android.os.Bundle
-import com.google.firebase.example.fireeats.R
-import com.google.firebase.example.fireeats.util.FirebaseUtil
-import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
-import android.widget.TextView
-import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.example.fireeats.FilterDialogFragment
-import com.google.firebase.example.fireeats.adapter.RestaurantAdapter
-import com.google.firebase.example.fireeats.viewmodel.MainActivityViewModel
-import com.google.firebase.example.fireeats.MainActivity
-import androidx.lifecycle.ViewModelProvider
-import com.google.firebase.firestore.FirebaseFirestoreException
-import com.google.android.material.snackbar.Snackbar
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.example.fireeats.model.Restaurant
-import com.google.firebase.example.fireeats.util.RestaurantUtil
-import com.google.firebase.example.fireeats.Filters
-import android.text.Html
-import android.content.Intent
-import android.app.Activity
 import android.content.Context
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.example.fireeats.RestaurantDetailActivity
-import com.firebase.ui.auth.AuthUI.IdpConfig.EmailBuilder
-import android.widget.Toast
-import android.text.TextUtils
+import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
-import android.widget.Spinner
+import android.view.ViewGroup
+import android.widget.EditText
 import androidx.fragment.app.DialogFragment
 import com.google.firebase.example.fireeats.model.Rating
+import com.google.firebase.example.fireeats.util.FirebaseUtil
+import me.zhanghai.android.materialratingbar.MaterialRatingBar
 
 /**
  * Dialog Fragment containing rating form.
@@ -65,7 +37,7 @@ class RatingDialogFragment : DialogFragment(), View.OnClickListener {
         fun onRating(rating: Rating?)
     }
 
-    private var mRatingListener: RatingListener? = null
+    private lateinit var mRatingListener: RatingListener
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -96,12 +68,12 @@ class RatingDialogFragment : DialogFragment(), View.OnClickListener {
 
     override fun onClick(v: View) {
         when (v.id) {
-            R.id.restaurant_form_button -> onSubmitClicked(v)
-            R.id.restaurant_form_cancel -> onCancelClicked(v)
+            R.id.restaurant_form_button -> onSubmitClicked()
+            R.id.restaurant_form_cancel -> onCancelClicked()
         }
     }
 
-    fun onSubmitClicked(view: View?) {
+    private fun onSubmitClicked() {
         val rating = FirebaseUtil.auth?.currentUser?.let {
             Rating(
                 it,
@@ -109,13 +81,11 @@ class RatingDialogFragment : DialogFragment(), View.OnClickListener {
                 mRatingText.text.toString()
             )
         }
-        if (mRatingListener != null) {
-            mRatingListener!!.onRating(rating)
-        }
+        mRatingListener.onRating(rating)
         dismiss()
     }
 
-    fun onCancelClicked(view: View?) {
+    private fun onCancelClicked() {
         dismiss()
     }
 
