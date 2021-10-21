@@ -13,107 +13,90 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package com.google.firebase.example.fireeats.adapter;
+package com.google.firebase.example.fireeats.adapter
 
-import android.content.res.Resources;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.bumptech.glide.Glide;
-import com.google.firebase.example.fireeats.R;
-import com.google.firebase.example.fireeats.model.Restaurant;
-import com.google.firebase.example.fireeats.util.RestaurantUtil;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.Query;
-
-import me.zhanghai.android.materialratingbar.MaterialRatingBar;
+import com.google.firebase.example.fireeats.Filters.Companion.default
+import com.google.firebase.example.fireeats.adapter.FirestoreAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import com.google.firebase.example.fireeats.R
+import androidx.recyclerview.widget.RecyclerView
+import android.widget.TextView
+import me.zhanghai.android.materialratingbar.MaterialRatingBar
+import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
+import com.google.firebase.example.fireeats.model.Restaurant
+import com.bumptech.glide.Glide
+import com.google.firebase.example.fireeats.util.RestaurantUtil
+import com.google.firebase.auth.FirebaseUser
+import android.text.TextUtils
+import android.view.View
+import android.widget.ImageView
+import com.google.firebase.auth.FirebaseAuth
+import com.firebase.ui.auth.AuthUI
+import com.google.firebase.example.fireeats.util.FirebaseUtil
+import androidx.lifecycle.ViewModel
+import com.google.firebase.example.fireeats.Filters
+import com.google.firebase.firestore.*
 
 /**
  * RecyclerView adapter for a list of Restaurants.
  */
-public class RestaurantAdapter extends FirestoreAdapter<RestaurantAdapter.ViewHolder> {
-
-    public interface OnRestaurantSelectedListener {
-
-        void onRestaurantSelected(DocumentSnapshot restaurant);
-
+open class RestaurantAdapter(query: Query?, private val mListener: OnRestaurantSelectedListener) :
+    FirestoreAdapter<RestaurantAdapter.ViewHolder?>(query) {
+    interface OnRestaurantSelectedListener {
+        fun onRestaurantSelected(restaurant: DocumentSnapshot?)
     }
 
-    private OnRestaurantSelectedListener mListener;
-
-    public RestaurantAdapter(Query query, OnRestaurantSelectedListener listener) {
-        super(query);
-        mListener = listener;
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return ViewHolder(inflater.inflate(R.layout.item_restaurant, parent, false))
     }
 
-    @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        return new ViewHolder(inflater.inflate(R.layout.item_restaurant, parent, false));
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.bind(getSnapshot(position), mListener)
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(getSnapshot(position), mListener);
-    }
-
-    static class ViewHolder extends RecyclerView.ViewHolder {
-
-        ImageView imageView;
-        TextView nameView;
-        MaterialRatingBar ratingBar;
-        TextView numRatingsView;
-        TextView priceView;
-        TextView categoryView;
-        TextView cityView;
-
-        public ViewHolder(View itemView) {
-            super(itemView);
-            imageView = itemView.findViewById(R.id.restaurant_item_image);
-            nameView = itemView.findViewById(R.id.restaurant_item_name);
-            ratingBar = itemView.findViewById(R.id.restaurant_item_rating);
-            numRatingsView = itemView.findViewById(R.id.restaurant_item_num_ratings);
-            priceView = itemView.findViewById(R.id.restaurant_item_price);
-            categoryView = itemView.findViewById(R.id.restaurant_item_category);
-            cityView = itemView.findViewById(R.id.restaurant_item_city);
-        }
-
-        public void bind(final DocumentSnapshot snapshot,
-                         final OnRestaurantSelectedListener listener) {
-
-            Restaurant restaurant = snapshot.toObject(Restaurant.class);
-            Resources resources = itemView.getResources();
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        var imageView: ImageView
+        var nameView: TextView
+        var ratingBar: MaterialRatingBar
+        var numRatingsView: TextView
+        var priceView: TextView
+        var categoryView: TextView
+        var cityView: TextView
+        fun bind(
+            snapshot: DocumentSnapshot?,
+            listener: OnRestaurantSelectedListener?
+        ) {
+            val restaurant = snapshot!!.toObject(Restaurant::class.java)
+            val resources = itemView.resources
 
             // Load image
-            Glide.with(imageView.getContext())
-                    .load(restaurant.getPhoto())
-                    .into(imageView);
-
-            nameView.setText(restaurant.getName());
-            ratingBar.setRating((float) restaurant.getAvgRating());
-            cityView.setText(restaurant.getCity());
-            categoryView.setText(restaurant.getCategory());
-            numRatingsView.setText(resources.getString(R.string.fmt_num_ratings,
-                    restaurant.getNumRatings()));
-            priceView.setText(RestaurantUtil.getPriceString(restaurant));
+            Glide.with(imageView.context)
+                .load(restaurant!!.photo)
+                .into(imageView)
+            nameView.text = restaurant.name
+            ratingBar.rating = restaurant.avgRating.toFloat()
+            cityView.text = restaurant.city
+            categoryView.text = restaurant.category
+            numRatingsView.text = resources.getString(
+                R.string.fmt_num_ratings,
+                restaurant.numRatings
+            )
+            priceView.text = RestaurantUtil.getPriceString(restaurant)
 
             // Click listener
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (listener != null) {
-                        listener.onRestaurantSelected(snapshot);
-                    }
-                }
-            });
+            itemView.setOnClickListener { listener?.onRestaurantSelected(snapshot) }
         }
 
+        init {
+            imageView = itemView.findViewById(R.id.restaurant_item_image)
+            nameView = itemView.findViewById(R.id.restaurant_item_name)
+            ratingBar = itemView.findViewById(R.id.restaurant_item_rating)
+            numRatingsView = itemView.findViewById(R.id.restaurant_item_num_ratings)
+            priceView = itemView.findViewById(R.id.restaurant_item_price)
+            categoryView = itemView.findViewById(R.id.restaurant_item_category)
+            cityView = itemView.findViewById(R.id.restaurant_item_city)
+        }
     }
 }

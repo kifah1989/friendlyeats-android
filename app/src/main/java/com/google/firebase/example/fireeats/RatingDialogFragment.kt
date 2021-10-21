@@ -13,102 +13,113 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package com.google.firebase.example.fireeats;
+package com.google.firebase.example.fireeats
 
-import android.content.Context;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
-
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.example.fireeats.model.Rating;
-import com.google.firebase.example.fireeats.util.FirebaseUtil;
-
-import me.zhanghai.android.materialratingbar.MaterialRatingBar;
+import me.zhanghai.android.materialratingbar.MaterialRatingBar
+import android.widget.EditText
+import com.google.firebase.example.fireeats.RatingDialogFragment.RatingListener
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.os.Bundle
+import com.google.firebase.example.fireeats.R
+import com.google.firebase.example.fireeats.util.FirebaseUtil
+import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.example.fireeats.FilterDialogFragment
+import com.google.firebase.example.fireeats.adapter.RestaurantAdapter
+import com.google.firebase.example.fireeats.viewmodel.MainActivityViewModel
+import com.google.firebase.example.fireeats.MainActivity
+import androidx.lifecycle.ViewModelProvider
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.android.material.snackbar.Snackbar
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.example.fireeats.model.Restaurant
+import com.google.firebase.example.fireeats.util.RestaurantUtil
+import com.google.firebase.example.fireeats.Filters
+import android.text.Html
+import android.content.Intent
+import android.app.Activity
+import android.content.Context
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.example.fireeats.RestaurantDetailActivity
+import com.firebase.ui.auth.AuthUI.IdpConfig.EmailBuilder
+import android.widget.Toast
+import android.text.TextUtils
+import android.view.View
+import android.widget.Spinner
+import androidx.fragment.app.DialogFragment
+import com.google.firebase.example.fireeats.model.Rating
 
 /**
  * Dialog Fragment containing rating form.
  */
-public class RatingDialogFragment extends DialogFragment implements View.OnClickListener {
+class RatingDialogFragment : DialogFragment(), View.OnClickListener {
+    private lateinit var mRatingBar: MaterialRatingBar
+    private lateinit var mRatingText: EditText
 
-    public static final String TAG = "RatingDialog";
-
-    private MaterialRatingBar mRatingBar;
-    private EditText mRatingText;
-
-    interface RatingListener {
-
-        void onRating(Rating rating);
-
+    internal interface RatingListener {
+        fun onRating(rating: Rating?)
     }
 
-    private RatingListener mRatingListener;
-
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.dialog_rating, container, false);
-        mRatingBar = v.findViewById(R.id.restaurant_form_rating);
-        mRatingText = v.findViewById(R.id.restaurant_form_text);
-
-        v.findViewById(R.id.restaurant_form_button).setOnClickListener(this);
-        v.findViewById(R.id.restaurant_form_cancel).setOnClickListener(this);
-
-        return v;
+    private var mRatingListener: RatingListener? = null
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val v = inflater.inflate(R.layout.dialog_rating, container, false)
+        mRatingBar = v.findViewById(R.id.restaurant_form_rating)
+        mRatingText = v.findViewById(R.id.restaurant_form_text)
+        v.findViewById<View>(R.id.restaurant_form_button).setOnClickListener(this)
+        v.findViewById<View>(R.id.restaurant_form_cancel).setOnClickListener(this)
+        return v
     }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-
-        if (context instanceof RatingListener) {
-            mRatingListener = (RatingListener) context;
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is RatingListener) {
+            mRatingListener = context
         }
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        getDialog().getWindow().setLayout(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-
+    override fun onResume() {
+        super.onResume()
+        dialog!!.window!!.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
     }
 
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.restaurant_form_button:
-                onSubmitClicked(v);
-                break;
-            case R.id.restaurant_form_cancel:
-                onCancelClicked(v);
-                break;
+    override fun onClick(v: View) {
+        when (v.id) {
+            R.id.restaurant_form_button -> onSubmitClicked(v)
+            R.id.restaurant_form_cancel -> onCancelClicked(v)
         }
     }
 
-    public void onSubmitClicked(View view) {
-        Rating rating = new Rating(
-                FirebaseUtil.getAuth().getCurrentUser(),
-                mRatingBar.getRating(),
-                mRatingText.getText().toString());
-
+    fun onSubmitClicked(view: View?) {
+        val rating = FirebaseUtil.auth?.currentUser?.let {
+            Rating(
+                it,
+                mRatingBar.rating.toDouble(),
+                mRatingText.text.toString()
+            )
+        }
         if (mRatingListener != null) {
-            mRatingListener.onRating(rating);
+            mRatingListener!!.onRating(rating)
         }
-
-        dismiss();
+        dismiss()
     }
 
-    public void onCancelClicked(View view) {
-        dismiss();
+    fun onCancelClicked(view: View?) {
+        dismiss()
+    }
+
+    companion object {
+        const val TAG = "RatingDialog"
     }
 }

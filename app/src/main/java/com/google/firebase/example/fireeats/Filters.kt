@@ -13,134 +13,114 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package com.google.firebase.example.fireeats;
+package com.google.firebase.example.fireeats
 
-import android.content.Context;
-import android.text.TextUtils;
-
-import com.google.firebase.example.fireeats.model.Restaurant;
-import com.google.firebase.example.fireeats.util.RestaurantUtil;
-import com.google.firebase.firestore.Query;
+import me.zhanghai.android.materialratingbar.MaterialRatingBar
+import android.widget.EditText
+import com.google.firebase.example.fireeats.RatingDialogFragment.RatingListener
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.os.Bundle
+import com.google.firebase.example.fireeats.R
+import com.google.firebase.example.fireeats.util.FirebaseUtil
+import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.example.fireeats.FilterDialogFragment
+import com.google.firebase.example.fireeats.adapter.RestaurantAdapter
+import com.google.firebase.example.fireeats.viewmodel.MainActivityViewModel
+import com.google.firebase.example.fireeats.MainActivity
+import androidx.lifecycle.ViewModelProvider
+import com.google.android.material.snackbar.Snackbar
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.example.fireeats.model.Restaurant
+import com.google.firebase.example.fireeats.util.RestaurantUtil
+import com.google.firebase.example.fireeats.Filters
+import android.text.Html
+import android.content.Intent
+import android.app.Activity
+import android.content.Context
+import com.google.firebase.example.fireeats.RestaurantDetailActivity
+import com.firebase.ui.auth.AuthUI.IdpConfig.EmailBuilder
+import android.widget.Toast
+import android.text.TextUtils
+import android.widget.Spinner
+import com.google.firebase.firestore.*
+import java.lang.StringBuilder
 
 /**
  * Object for passing filters around.
  */
-public class Filters {
-
-    private String category = null;
-    private String city = null;
-    private int price = -1;
-    private String sortBy = null;
-    private Query.Direction sortDirection = null;
-
-    public Filters() {}
-
-    public static Filters getDefault() {
-        Filters filters = new Filters();
-        filters.setSortBy(Restaurant.FIELD_AVG_RATING);
-        filters.setSortDirection(Query.Direction.DESCENDING);
-
-        return filters;
+class Filters {
+    var category: String? = null
+    var city: String? = null
+    var price = -1
+    var sortBy: String = ""
+    lateinit var sortDirection: Query.Direction
+    fun hasCategory(): Boolean {
+        return !TextUtils.isEmpty(category)
     }
 
-    public boolean hasCategory() {
-        return !(TextUtils.isEmpty(category));
+    fun hasCity(): Boolean {
+        return !TextUtils.isEmpty(city)
     }
 
-    public boolean hasCity() {
-        return !(TextUtils.isEmpty(city));
+    fun hasPrice(): Boolean {
+        return price > 0
     }
 
-    public boolean hasPrice() {
-        return (price > 0);
+    fun hasSortBy(): Boolean {
+        return !TextUtils.isEmpty(sortBy)
     }
 
-    public boolean hasSortBy() {
-        return !(TextUtils.isEmpty(sortBy));
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public int getPrice() {
-        return price;
-    }
-
-    public void setPrice(int price) {
-        this.price = price;
-    }
-
-    public String getSortBy() {
-        return sortBy;
-    }
-
-    public void setSortBy(String sortBy) {
-        this.sortBy = sortBy;
-    }
-
-    public Query.Direction getSortDirection() {
-        return sortDirection;
-    }
-
-    public void setSortDirection(Query.Direction sortDirection) {
-        this.sortDirection = sortDirection;
-    }
-
-    public String getSearchDescription(Context context) {
-        StringBuilder desc = new StringBuilder();
-
+    fun getSearchDescription(context: Context): String {
+        val desc = StringBuilder()
         if (category == null && city == null) {
-            desc.append("<b>");
-            desc.append(context.getString(R.string.all_restaurants));
-            desc.append("</b>");
+            desc.append("<b>")
+            desc.append(context.getString(R.string.all_restaurants))
+            desc.append("</b>")
         }
-
         if (category != null) {
-            desc.append("<b>");
-            desc.append(category);
-            desc.append("</b>");
+            desc.append("<b>")
+            desc.append(category)
+            desc.append("</b>")
         }
-
         if (category != null && city != null) {
-            desc.append(" in ");
+            desc.append(" in ")
         }
-
         if (city != null) {
-            desc.append("<b>");
-            desc.append(city);
-            desc.append("</b>");
+            desc.append("<b>")
+            desc.append(city)
+            desc.append("</b>")
         }
-
         if (price > 0) {
-            desc.append(" for ");
-            desc.append("<b>");
-            desc.append(RestaurantUtil.getPriceString(price));
-            desc.append("</b>");
+            desc.append(" for ")
+            desc.append("<b>")
+            desc.append(RestaurantUtil.getPriceString(price))
+            desc.append("</b>")
         }
-
-        return desc.toString();
+        return desc.toString()
     }
 
-    public String getOrderDescription(Context context) {
-        if (Restaurant.FIELD_PRICE.equals(sortBy)) {
-            return context.getString(R.string.sorted_by_price);
-        } else if (Restaurant.FIELD_POPULARITY.equals(sortBy)) {
-            return context.getString(R.string.sorted_by_popularity);
+    fun getOrderDescription(context: Context): String {
+        return if (Restaurant.FIELD_PRICE == sortBy) {
+            context.getString(R.string.sorted_by_price)
+        } else if (Restaurant.FIELD_POPULARITY == sortBy) {
+            context.getString(R.string.sorted_by_popularity)
         } else {
-            return context.getString(R.string.sorted_by_rating);
+            context.getString(R.string.sorted_by_rating)
         }
+    }
+
+    companion object {
+        @JvmStatic
+        val default: Filters
+            get() {
+                val filters = Filters()
+                filters.sortBy = Restaurant.FIELD_AVG_RATING
+                filters.sortDirection = Query.Direction.DESCENDING
+                return filters
+            }
     }
 }

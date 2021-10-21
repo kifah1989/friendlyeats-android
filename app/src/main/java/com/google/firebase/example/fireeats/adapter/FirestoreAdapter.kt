@@ -13,142 +13,133 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package com.google.firebase.example.fireeats.adapter;
+package com.google.firebase.example.fireeats.adapter
 
-import android.util.Log;
-
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
-
-import java.util.ArrayList;
+import com.google.firebase.example.fireeats.Filters.Companion.default
+import com.google.firebase.example.fireeats.adapter.FirestoreAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import com.google.firebase.example.fireeats.R
+import androidx.recyclerview.widget.RecyclerView
+import android.widget.TextView
+import me.zhanghai.android.materialratingbar.MaterialRatingBar
+import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
+import com.google.firebase.example.fireeats.model.Restaurant
+import com.bumptech.glide.Glide
+import com.google.firebase.example.fireeats.util.RestaurantUtil
+import com.google.firebase.auth.FirebaseUser
+import android.text.TextUtils
+import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
+import com.firebase.ui.auth.AuthUI
+import com.google.firebase.example.fireeats.util.FirebaseUtil
+import androidx.lifecycle.ViewModel
+import com.google.firebase.example.fireeats.Filters
+import com.google.firebase.firestore.*
+import java.util.ArrayList
 
 /**
- * RecyclerView adapter for displaying the results of a Firestore {@link Query}.
+ * RecyclerView adapter for displaying the results of a Firestore [Query].
  *
  * Note that this class forgoes some efficiency to gain simplicity. For example, the result of
- * {@link DocumentSnapshot#toObject(Class)} is not cached so the same object may be deserialized
+ * [DocumentSnapshot.toObject] is not cached so the same object may be deserialized
  * many times as the user scrolls.
- * 
+ *
  * See the adapter classes in FirebaseUI (https://github.com/firebase/FirebaseUI-Android/tree/master/firestore) for a
  * more efficient implementation of a Firestore RecyclerView Adapter.
  */
-public abstract class FirestoreAdapter<VH extends RecyclerView.ViewHolder>
-        extends RecyclerView.Adapter<VH> implements EventListener<QuerySnapshot> {
-    @Override
-    public void onEvent(QuerySnapshot documentSnapshots,
-                        FirebaseFirestoreException e) {
+abstract class FirestoreAdapter<VH : RecyclerView.ViewHolder?>(private var mQuery: Query?) :
+    RecyclerView.Adapter<VH>(), EventListener<QuerySnapshot> {
+    override fun onEvent(
+        documentSnapshots: QuerySnapshot?,
+        e: FirebaseFirestoreException?
+    ) {
 
         // Handle errors
         if (e != null) {
-            Log.w(TAG, "onEvent:error", e);
-            return;
+            Log.w(TAG, "onEvent:error", e)
+            return
         }
 
         // Dispatch the event
-        for (DocumentChange change : documentSnapshots.getDocumentChanges()) {
-            // Snapshot of the changed document
-            DocumentSnapshot snapshot = change.getDocument();
-
-            switch (change.getType()) {
-                case ADDED:
-                    onDocumentAdded(change);
-                    break;
-                case MODIFIED:
-                    onDocumentModified(change);
-                    break;
-                case REMOVED:
-                    onDocumentRemoved(change);
-                    break;
+        if (documentSnapshots != null) {
+            for (change in documentSnapshots.documentChanges) {
+                // Snapshot of the changed document
+                val snapshot: DocumentSnapshot = change.document
+                when (change.type) {
+                    DocumentChange.Type.ADDED -> onDocumentAdded(change)
+                    DocumentChange.Type.MODIFIED -> onDocumentModified(change)
+                    DocumentChange.Type.REMOVED -> onDocumentRemoved(change)
+                }
             }
         }
-
-        onDataChanged();
+        onDataChanged()
     }
 
-
-    private static final String TAG = "Firestore Adapter";
-
-    private Query mQuery;
-    private ListenerRegistration mRegistration;
-
-    private ArrayList<DocumentSnapshot> mSnapshots = new ArrayList<>();
-
-    public FirestoreAdapter(Query query) {
-        mQuery = query;
-    }
-
-    public void startListening() {
+    private var mRegistration: ListenerRegistration? = null
+    private val mSnapshots = ArrayList<DocumentSnapshot>()
+    fun startListening() {
         if (mQuery != null && mRegistration == null) {
-            mRegistration = mQuery.addSnapshotListener(this);
+            mRegistration = mQuery!!.addSnapshotListener(this)
         }
-
     }
 
-    public void stopListening() {
+    fun stopListening() {
         if (mRegistration != null) {
-            mRegistration.remove();
-            mRegistration = null;
+            mRegistration!!.remove()
+            mRegistration = null
         }
-
-        mSnapshots.clear();
-        notifyDataSetChanged();
+        mSnapshots.clear()
+        notifyDataSetChanged()
     }
 
-    public void setQuery(Query query) {
+    fun setQuery(query: Query?) {
         // Stop listening
-        stopListening();
+        stopListening()
 
         // Clear existing data
-        mSnapshots.clear();
-        notifyDataSetChanged();
+        mSnapshots.clear()
+        notifyDataSetChanged()
 
         // Listen to new query
-        mQuery = query;
-        startListening();
+        mQuery = query
+        startListening()
     }
 
-    @Override
-    public int getItemCount() {
-        return mSnapshots.size();
+    override fun getItemCount(): Int {
+        return mSnapshots.size
     }
 
-    protected DocumentSnapshot getSnapshot(int index) {
-        return mSnapshots.get(index);
+    protected fun getSnapshot(index: Int): DocumentSnapshot {
+        return mSnapshots[index]
     }
 
-    protected void onError(FirebaseFirestoreException e) {};
-
-    protected void onDataChanged() {}
-
-    protected void onDocumentAdded(DocumentChange change) {
-        mSnapshots.add(change.getNewIndex(), change.getDocument());
-        notifyItemInserted(change.getNewIndex());
+    protected open fun onError(e: FirebaseFirestoreException?) {}
+    protected open fun onDataChanged() {}
+    protected fun onDocumentAdded(change: DocumentChange) {
+        mSnapshots.add(change.newIndex, change.document)
+        notifyItemInserted(change.newIndex)
     }
 
-    protected void onDocumentModified(DocumentChange change) {
-        if (change.getOldIndex() == change.getNewIndex()) {
+    protected fun onDocumentModified(change: DocumentChange) {
+        if (change.oldIndex == change.newIndex) {
             // Item changed but remained in same position
-            mSnapshots.set(change.getOldIndex(), change.getDocument());
-            notifyItemChanged(change.getOldIndex());
+            mSnapshots[change.oldIndex] = change.document
+            notifyItemChanged(change.oldIndex)
         } else {
             // Item changed and changed position
-            mSnapshots.remove(change.getOldIndex());
-            mSnapshots.add(change.getNewIndex(), change.getDocument());
-            notifyItemMoved(change.getOldIndex(), change.getNewIndex());
+            mSnapshots.removeAt(change.oldIndex)
+            mSnapshots.add(change.newIndex, change.document)
+            notifyItemMoved(change.oldIndex, change.newIndex)
         }
     }
 
-    protected void onDocumentRemoved(DocumentChange change) {
-        mSnapshots.remove(change.getOldIndex());
-        notifyItemRemoved(change.getOldIndex());
+    protected fun onDocumentRemoved(change: DocumentChange) {
+        mSnapshots.removeAt(change.oldIndex)
+        notifyItemRemoved(change.oldIndex)
     }
 
+    companion object {
+        private const val TAG = "Firestore Adapter"
+    }
 }

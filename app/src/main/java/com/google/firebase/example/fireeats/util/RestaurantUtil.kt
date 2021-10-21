@@ -13,136 +13,143 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package com.google.firebase.example.fireeats.util;
+package com.google.firebase.example.fireeats.util
 
-import android.content.Context;
-
-import com.google.firebase.example.fireeats.R;
-import com.google.firebase.example.fireeats.model.Restaurant;
-
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Random;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import android.content.Context
+import com.google.firebase.example.fireeats.Filters.Companion.default
+import com.google.firebase.example.fireeats.adapter.FirestoreAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import com.google.firebase.example.fireeats.R
+import androidx.recyclerview.widget.RecyclerView
+import android.widget.TextView
+import me.zhanghai.android.materialratingbar.MaterialRatingBar
+import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
+import com.google.firebase.example.fireeats.model.Restaurant
+import com.bumptech.glide.Glide
+import com.google.firebase.example.fireeats.util.RestaurantUtil
+import com.google.firebase.firestore.ServerTimestamp
+import com.google.firebase.auth.FirebaseUser
+import android.text.TextUtils
+import com.google.firebase.firestore.IgnoreExtraProperties
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
+import com.firebase.ui.auth.AuthUI
+import com.google.firebase.example.fireeats.util.FirebaseUtil
+import androidx.lifecycle.ViewModel
+import com.google.firebase.example.fireeats.Filters
+import java.util.*
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 /**
  * Utilities for Restaurants.
  */
-public class RestaurantUtil {
-
-    private static final String TAG = "RestaurantUtil";
-
-    private static final ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(2, 4, 60,
-            TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
-
-    private static final String RESTAURANT_URL_FMT = "https://storage.googleapis.com/firestorequickstarts.appspot.com/food_%d.png";
-
-    private static final int MAX_IMAGE_NUM = 22;
-
-    private static final String[] NAME_FIRST_WORDS = {
-            "Foo",
-            "Bar",
-            "Baz",
-            "Qux",
-            "Fire",
-            "Sam's",
-            "World Famous",
-            "Google",
-            "The Best",
-    };
-
-    private static final String[] NAME_SECOND_WORDS = {
-            "Restaurant",
-            "Cafe",
-            "Spot",
-            "Eatin' Place",
-            "Eatery",
-            "Drive Thru",
-            "Diner",
-    };
-
+object RestaurantUtil {
+    private const val TAG = "RestaurantUtil"
+    private val EXECUTOR = ThreadPoolExecutor(
+        2, 4, 60,
+        TimeUnit.SECONDS, LinkedBlockingQueue()
+    )
+    private const val RESTAURANT_URL_FMT =
+        "https://storage.googleapis.com/firestorequickstarts.appspot.com/food_%d.png"
+    private const val MAX_IMAGE_NUM = 22
+    private val NAME_FIRST_WORDS = arrayOf(
+        "Foo",
+        "Bar",
+        "Baz",
+        "Qux",
+        "Fire",
+        "Sam's",
+        "World Famous",
+        "Google",
+        "The Best"
+    )
+    private val NAME_SECOND_WORDS = arrayOf(
+        "Restaurant",
+        "Cafe",
+        "Spot",
+        "Eatin' Place",
+        "Eatery",
+        "Drive Thru",
+        "Diner"
+    )
 
     /**
      * Create a random Restaurant POJO.
      */
-    public static Restaurant getRandom(Context context) {
-        Restaurant restaurant = new Restaurant();
-        Random random = new Random();
+    fun getRandom(context: Context): Restaurant {
+        val restaurant = Restaurant()
+        val random = Random()
 
         // Cities (first element is 'Any')
-        String[] cities = context.getResources().getStringArray(R.array.cities);
-        cities = Arrays.copyOfRange(cities, 1, cities.length);
+        var cities = context.resources.getStringArray(R.array.cities)
+        cities = Arrays.copyOfRange(cities, 1, cities.size)
 
         // Categories (first element is 'Any')
-        String[] categories = context.getResources().getStringArray(R.array.categories);
-        categories = Arrays.copyOfRange(categories, 1, categories.length);
-
-        int[] prices = new int[]{1, 2, 3};
-
-        restaurant.setName(getRandomName(random));
-        restaurant.setCity(getRandomString(cities, random));
-        restaurant.setCategory(getRandomString(categories, random));
-        restaurant.setPhoto(getRandomImageUrl(random));
-        restaurant.setPrice(getRandomInt(prices, random));
-        restaurant.setAvgRating(getRandomRating(random));
-        restaurant.setNumRatings(random.nextInt(20));
-
-        return restaurant;
+        var categories = context.resources.getStringArray(R.array.categories)
+        categories = Arrays.copyOfRange(categories, 1, categories.size)
+        val prices = intArrayOf(1, 2, 3)
+        restaurant.name = getRandomName(random)
+        restaurant.city = getRandomString(cities, random)
+        restaurant.category = getRandomString(categories, random)
+        restaurant.photo = getRandomImageUrl(random)
+        restaurant.price = getRandomInt(prices, random)
+        restaurant.avgRating = getRandomRating(random)
+        restaurant.numRatings = random.nextInt(20)
+        return restaurant
     }
-
 
     /**
      * Get a random image.
      */
-    private static String getRandomImageUrl(Random random) {
+    private fun getRandomImageUrl(random: Random): String {
         // Integer between 1 and MAX_IMAGE_NUM (inclusive)
-        int id = random.nextInt(MAX_IMAGE_NUM) + 1;
-
-        return String.format(Locale.getDefault(), RESTAURANT_URL_FMT, id);
+        val id = random.nextInt(MAX_IMAGE_NUM) + 1
+        return String.format(Locale.getDefault(), RESTAURANT_URL_FMT, id)
     }
 
     /**
      * Get price represented as dollar signs.
      */
-    public static String getPriceString(Restaurant restaurant) {
-        return getPriceString(restaurant.getPrice());
+    fun getPriceString(restaurant: Restaurant?): String {
+        return getPriceString(restaurant!!.price)
     }
 
     /**
      * Get price represented as dollar signs.
      */
-    public static String getPriceString(int priceInt) {
-        switch (priceInt) {
-            case 1:
-                return "$";
-            case 2:
-                return "$$";
-            case 3:
-            default:
-                return "$$$";
+    fun getPriceString(priceInt: Int): String {
+        return when (priceInt) {
+            1 -> "$"
+            2 -> "$$"
+            3 -> "$$$"
+            else -> "$$$"
         }
     }
 
-    private static double getRandomRating(Random random) {
-        double min = 1.0;
-        return min + (random.nextDouble() * 4.0);
+    private fun getRandomRating(random: Random): Double {
+        val min = 1.0
+        return min + random.nextDouble() * 4.0
     }
 
-    private static String getRandomName(Random random) {
-        return getRandomString(NAME_FIRST_WORDS, random) + " "
-                + getRandomString(NAME_SECOND_WORDS, random);
+    private fun getRandomName(random: Random): String {
+        return (getRandomString(NAME_FIRST_WORDS, random) + " "
+                + getRandomString(NAME_SECOND_WORDS, random))
     }
 
-    private static String getRandomString(String[] array, Random random) {
-        int ind = random.nextInt(array.length);
-        return array[ind];
+    private fun getRandomString(array: Array<String>, random: Random): String {
+        val ind = random.nextInt(array.size)
+        return array[ind]
     }
 
-    private static int getRandomInt(int[] array, Random random) {
-        int ind = random.nextInt(array.length);
-        return array[ind];
+    private fun getRandomInt(array: IntArray, random: Random): Int {
+        val ind = random.nextInt(array.size)
+        return array[ind]
     }
-
 }

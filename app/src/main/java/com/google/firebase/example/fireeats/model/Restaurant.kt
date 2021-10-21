@@ -13,96 +13,67 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package com.google.firebase.example.fireeats.model;
+package com.google.firebase.example.fireeats.model
 
-import com.google.firebase.firestore.IgnoreExtraProperties;
+import com.google.firebase.example.fireeats.Filters.Companion.default
+import com.google.firebase.example.fireeats.adapter.FirestoreAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import com.google.firebase.example.fireeats.R
+import androidx.recyclerview.widget.RecyclerView
+import android.widget.TextView
+import me.zhanghai.android.materialratingbar.MaterialRatingBar
+import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
+import com.google.firebase.example.fireeats.model.Restaurant
+import com.bumptech.glide.Glide
+import com.google.firebase.example.fireeats.util.RestaurantUtil
+import com.google.firebase.firestore.ServerTimestamp
+import com.google.firebase.auth.FirebaseUser
+import android.text.TextUtils
+import com.google.firebase.firestore.IgnoreExtraProperties
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
+import com.firebase.ui.auth.AuthUI
+import com.google.firebase.example.fireeats.util.FirebaseUtil
+import androidx.lifecycle.ViewModel
+import com.google.firebase.example.fireeats.Filters
 
 /**
  * Restaurant POJO.
  */
 @IgnoreExtraProperties
-public class Restaurant {
+class Restaurant {
+    var name: String? = null
+    var city: String? = null
+    var category: String? = null
+    var photo: String? = null
+    var price = 0
+    var numRatings = 0
+    var avgRating = 0.0
 
-    public static final String FIELD_CITY = "city";
-    public static final String FIELD_CATEGORY = "category";
-    public static final String FIELD_PRICE = "price";
-    public static final String FIELD_POPULARITY = "numRatings";
-    public static final String FIELD_AVG_RATING = "avgRating";
-
-    private String name;
-    private String city;
-    private String category;
-    private String photo;
-    private int price;
-    private int numRatings;
-    private double avgRating;
-
-    public Restaurant() {}
-
-    public Restaurant(String name, String city, String category, String photo,
-                      int price, int numRatings, double avgRating) {
-        this.name = name;
-        this.city = city;
-        this.category = category;
-        this.photo = photo;
-        this.price = price;
-        this.numRatings = numRatings;
-        this.avgRating = avgRating;
+    constructor() {}
+    constructor(
+        name: String?, city: String?, category: String?, photo: String?,
+        price: Int, numRatings: Int, avgRating: Double
+    ) {
+        this.name = name
+        this.city = city
+        this.category = category
+        this.photo = photo
+        this.price = price
+        this.numRatings = numRatings
+        this.avgRating = avgRating
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getPhoto() {
-        return photo;
-    }
-
-    public void setPhoto(String photo) {
-        this.photo = photo;
-    }
-
-    public int getPrice() {
-        return price;
-    }
-
-    public void setPrice(int price) {
-        this.price = price;
-    }
-
-    public int getNumRatings() {
-        return numRatings;
-    }
-
-    public void setNumRatings(int numRatings) {
-        this.numRatings = numRatings;
-    }
-
-    public double getAvgRating() {
-        return avgRating;
-    }
-
-    public void setAvgRating(double avgRating) {
-        this.avgRating = avgRating;
+    companion object {
+        const val FIELD_CITY = "city"
+        const val FIELD_CATEGORY = "category"
+        const val FIELD_PRICE = "price"
+        const val FIELD_POPULARITY = "numRatings"
+        const val FIELD_AVG_RATING = "avgRating"
     }
 }

@@ -13,61 +13,64 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package com.google.firebase.example.fireeats.adapter;
+package com.google.firebase.example.fireeats.adapter
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.firebase.example.fireeats.R;
-import com.google.firebase.example.fireeats.model.Rating;
-import com.google.firebase.firestore.Query;
-
-import me.zhanghai.android.materialratingbar.MaterialRatingBar;
+import com.google.firebase.example.fireeats.Filters.Companion.default
+import com.google.firebase.example.fireeats.adapter.FirestoreAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import com.google.firebase.example.fireeats.R
+import androidx.recyclerview.widget.RecyclerView
+import android.widget.TextView
+import me.zhanghai.android.materialratingbar.MaterialRatingBar
+import com.google.firebase.example.fireeats.adapter.RestaurantAdapter.OnRestaurantSelectedListener
+import com.google.firebase.example.fireeats.model.Restaurant
+import com.bumptech.glide.Glide
+import com.google.firebase.example.fireeats.util.RestaurantUtil
+import com.google.firebase.auth.FirebaseUser
+import android.text.TextUtils
+import android.view.View
+import com.google.firebase.auth.FirebaseAuth
+import com.firebase.ui.auth.AuthUI
+import com.google.firebase.example.fireeats.util.FirebaseUtil
+import androidx.lifecycle.ViewModel
+import com.google.firebase.example.fireeats.Filters
+import com.google.firebase.example.fireeats.model.Rating
+import com.google.firebase.firestore.*
 
 /**
  * RecyclerView adapter for a bunch of Ratings.
  */
-public class RatingAdapter extends FirestoreAdapter<RatingAdapter.ViewHolder> {
-
-    public RatingAdapter(Query query) {
-        super(query);
+open class RatingAdapter(query: Query?) : FirestoreAdapter<RatingAdapter.ViewHolder?>(query) {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        return ViewHolder(
+            LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_rating, parent, false)
+        )
     }
 
-    @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_rating, parent, false));
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.bind(
+            getSnapshot(position).toObject(
+                Rating::class.java
+            )
+        )
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(getSnapshot(position).toObject(Rating.class));
-    }
-
-    static class ViewHolder extends RecyclerView.ViewHolder {
-
-        TextView nameView;
-        MaterialRatingBar ratingBar;
-        TextView textView;
-
-        public ViewHolder(View itemView) {
-            super(itemView);
-            nameView = itemView.findViewById(R.id.rating_item_name);
-            ratingBar = itemView.findViewById(R.id.rating_item_rating);
-            textView = itemView.findViewById(R.id.rating_item_text);
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        var nameView: TextView
+        var ratingBar: MaterialRatingBar
+        var textView: TextView
+        fun bind(rating: Rating?) {
+            nameView.text = rating!!.userName
+            ratingBar.rating = rating.rating.toFloat()
+            textView.text = rating.text
         }
 
-        public void bind(Rating rating) {
-            nameView.setText(rating.getUserName());
-            ratingBar.setRating((float) rating.getRating());
-            textView.setText(rating.getText());
+        init {
+            nameView = itemView.findViewById(R.id.rating_item_name)
+            ratingBar = itemView.findViewById(R.id.rating_item_rating)
+            textView = itemView.findViewById(R.id.rating_item_text)
         }
     }
-
 }
