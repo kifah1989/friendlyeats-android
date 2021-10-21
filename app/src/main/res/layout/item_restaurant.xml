@@ -21,9 +21,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/restaurant_item_image"
-        android:layout_marginBottom="4dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="-2dp"
+        android:layout_marginBottom="4dp"
         android:layout_toLeftOf="@+id/restaurant_item_price"
         android:layout_toRightOf="@+id/restaurant_item_image"
         android:ellipsize="end"
@@ -35,8 +35,8 @@
         style="@style/Widget.MaterialRatingBar.RatingBar.Indicator.Small"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/restaurant_item_name"
         android:layout_below="@+id/restaurant_item_name"
+        android:layout_alignLeft="@+id/restaurant_item_name"
         android:layout_marginBottom="4dp" />
 
     <TextView

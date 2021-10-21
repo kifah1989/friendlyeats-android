@@ -59,8 +59,8 @@
                     android:layout_marginLeft="8dp"
                     android:layout_toRightOf="@+id/button_filter"
                     android:orientation="vertical"
-                    android:paddingBottom="8dp"
-                    android:paddingTop="8dp">
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp">
 
                     <TextView
                         android:id="@+id/text_current_search"
