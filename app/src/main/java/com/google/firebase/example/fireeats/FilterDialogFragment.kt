@@ -157,8 +157,8 @@ class FilterDialogFragment : DialogFragment(), View.OnClickListener {
     private val filters: Filters
         get() {
             val filters = Filters()
-            filters.category = selectedCategory
-            filters.city = selectedCity
+            filters.category = selectedCategory.toString()
+            filters.city = selectedCity.toString()
             filters.price = selectedPrice
             filters.sortBy = selectedSortBy.toString()
             filters.sortDirection = sortDirection!!

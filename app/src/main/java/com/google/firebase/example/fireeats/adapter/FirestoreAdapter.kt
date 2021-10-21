@@ -59,13 +59,13 @@ abstract class FirestoreAdapter<VH : RecyclerView.ViewHolder?>(private var mQuer
         onDataChanged()
     }
 
-    private lateinit var mRegistration: ListenerRegistration
+    private var mRegistration: ListenerRegistration? =null
     private val mSnapshots = ArrayList<DocumentSnapshot>()
     fun startListening() {
     }
 
     fun stopListening() {
-        mRegistration.remove()
+        mRegistration?.remove()
         mSnapshots.clear()
     }
 
